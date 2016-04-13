@@ -1,0 +1,20 @@
+to run mercury on your local machine, run:
+vagrant up
+
+then point your browser to:
+192.168.33.10
+
+you should see a list of transactions that happened
+between the logging server and the test rPi instance.
+
+the test rPi instance is at:
+192.168.33.15
+
+all traffic is encrypted using HTTPS.
+
+only transactions with requestors showing
+a whitelisted UUID are shown.
+
+the datapath should be:
+.  rPi request -> nginx log -> logstash log 
+-> elasticsearch record -> kibana table
