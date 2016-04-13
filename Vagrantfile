@@ -53,8 +53,8 @@ def handle_proxies vm, proxy
   end
 end
 
-def update_box vm
-  node.vm.provision :shell, :inline => <<-SH
+def update_box box
+  box.vm.provision :shell, :inline => <<-SH
     yum update -y
   SH
 end

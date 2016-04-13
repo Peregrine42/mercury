@@ -1,0 +1,7 @@
+.vagrant/
+bin/
+lib/
+include/
+*.pyc
+pip-selfcheck.json
+.Python

@@ -18,3 +18,18 @@ a whitelisted UUID are shown.
 the datapath should be:
 .  rPi request -> nginx log -> logstash log 
 -> elasticsearch record -> kibana table
+
+each rPi periodically GETs a particular URL,
+according to its UUID.
+
+https://192.168.33.10/rpi/:id
+
+this GET is logged by nginx.
+
+filebeat monitors the nginx logs and forwards them
+to logstash.
+
+logstash processes the logs into a format useful
+for kibana, and stores them in elasticsearch.
+
+kibana requests data from elasticsearch for analysis.

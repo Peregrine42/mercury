@@ -1,0 +1,9 @@
+[Unit]
+Description=mercury phone home
+After=network.target
+[Service]
+User=mercury
+ExecStart=/home/mercury/downloads/run/phone_home.sh
+Restart=always
+[Install]
+WantedBy=multi-user.target
