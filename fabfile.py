@@ -10,6 +10,8 @@ env.parallel = True
 env.roledefs["rpis"] = ["192.168.33.15"]
 env.roledefs["loggers"] = ["192.168.33.10"]
 
+rpi_ids = ["rpi5"]
+
 def vagrant():
     result = local('vagrant ssh-config', capture=True)
     env.user = re.findall(r'User\s+([^\n]+)', result)[0]
@@ -33,20 +35,29 @@ def rpis():
     sudo("id -u mercury || adduser mercury")
 
     # set up phone_home.sh
-    sudo("mkdir -p /home/mercury/downloads/run")
-    sudo("chown -R mercury:mercury /home/mercury/downloads/run")
+    sudo("mkdir -p /home/mercury/payload")
+    sudo("chown -R mercury:mercury /home/mercury/payload")
     upload_template_as_user(
         "mercury",
         "templates/rpi/phone_home.sh",
-        "/home/mercury/downloads/run/phone_home.sh",
+        "/home/mercury/phone_home.sh",
         context = { 
-            "id": "rpi" + env.host[-1], 
-            "home": env.roledefs["loggers"][0],
             "interval": 5,
             "timeout": 4
         }
     )
-    sudo("chmod +x /home/mercury/downloads/run/phone_home.sh")
+    sudo("chmod +x /home/mercury/phone_home.sh")
+
+    upload_template_as_user(
+        "mercury",
+        "templates/rpi/sync.sh",
+        "/home/mercury/sync.sh",
+        context = { 
+            "id": rpi_ids[0], 
+            "home": env.roledefs["loggers"][0],
+        }
+    )
+    sudo("chmod +x /home/mercury/sync.sh")
 
     upload_template_as_user(
         "root",
@@ -64,3 +75,12 @@ def logger():
     sudo("yum install -y nginx httpd-tools")
     sudo("systemctl enable nginx")
     sudo("systemctl restart nginx")
+
+    sudo("mkdir -p /usr/share/nginx/html/rpi/rpi5")
+    upload_template_as_user(
+        "root",
+        "templates/logger/basic_crontab",
+        "/usr/share/nginx/html/rpi/rpi5/crontab",
+        context = {}
+    )
+    put("logger/payload.tar.gz", "/usr/share/nginx/html/rpi/rpi5/payload.tar.gz", use_sudo=True)
