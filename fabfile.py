@@ -60,6 +60,13 @@ def rpis():
     sudo("chmod +x /home/mercury/sync.sh")
 
     upload_template_as_user(
+        "mercury",
+        "templates/rpi/cacert.pem",
+        "/home/mercury/cacert.pem",
+        context = { }
+    )
+
+    upload_template_as_user(
         "root",
         "templates/rpi/phone_home.service",
         "/etc/systemd/system/phone_home.service",
@@ -84,3 +91,12 @@ def logger():
         context = {}
     )
     put("logger/payload.tar.gz", "/usr/share/nginx/html/rpi/rpi5/payload.tar.gz", use_sudo=True)
+
+    sudo("mkdir /etc/nginx/ssl")
+    upload_template_as_user(
+        "root",
+        "templates/logger/nginx.conf",
+        "/etc/nginx/nginx.conf",
+        context = { "ip": env.roledefs["loggers"][0] }
+    )
+
