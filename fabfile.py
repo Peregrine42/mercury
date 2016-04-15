@@ -54,7 +54,8 @@ def rpis():
         "/home/mercury/sync.sh",
         context = { 
             "id": rpi_ids[0], 
-            "home": env.roledefs["loggers"][0],
+            "home": "https://" + env.roledefs["loggers"][0],
+            "password": "foobar"
         }
     )
     sudo("chmod +x /home/mercury/sync.sh")
@@ -63,7 +64,7 @@ def rpis():
         "mercury",
         "templates/rpi/cacert.pem",
         "/home/mercury/cacert.pem",
-        context = { }
+        context = {}
     )
 
     upload_template_as_user(
@@ -72,7 +73,18 @@ def rpis():
         "/etc/systemd/system/phone_home.service",
         context = {}
     )
+
+    upload_template_as_user(
+        "root",
+        "templates/rpi/phone_home_startup.service",
+        "/etc/systemd/system/phone_home_startup.service",
+        context = {}
+    )
     sudo("systemctl daemon-reload")
+
+    sudo("systemctl restart phone_home_startup")
+    sudo("systemctl enable phone_home_startup")
+
     sudo("systemctl restart phone_home")
     sudo("systemctl enable phone_home")
 
@@ -80,8 +92,9 @@ def rpis():
 def logger():
     sudo("yum install -y epel-release")
     sudo("yum install -y nginx httpd-tools")
-    sudo("systemctl enable nginx")
-    sudo("systemctl restart nginx")
+
+    sudo("touch /etc/nginx/.htpasswd")
+    sudo("htpasswd -b /etc/nginx/.htpasswd " + rpi_ids[0] + " foobar")
 
     sudo("mkdir -p /usr/share/nginx/html/rpi/rpi5")
     upload_template_as_user(
@@ -92,7 +105,18 @@ def logger():
     )
     put("logger/payload.tar.gz", "/usr/share/nginx/html/rpi/rpi5/payload.tar.gz", use_sudo=True)
 
-    sudo("mkdir /etc/nginx/ssl")
+    sudo("mkdir -p /etc/nginx/ssl")
+    upload_template_as_user(
+        "root",
+        "templates/logger/nginx.crt",
+        "/etc/nginx/ssl/nginx.crt"
+    )
+    upload_template_as_user(
+        "root",
+        "templates/logger/nginx.key",
+        "/etc/nginx/ssl/nginx.key"
+    )
+
     upload_template_as_user(
         "root",
         "templates/logger/nginx.conf",
@@ -100,3 +124,5 @@ def logger():
         context = { "ip": env.roledefs["loggers"][0] }
     )
 
+    sudo("systemctl enable nginx")
+    sudo("systemctl restart nginx")

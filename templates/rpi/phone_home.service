@@ -1,6 +1,7 @@
 [Unit]
 Description=mercury phone home
-After=network.target
+After=phone_home_startup.service
+Requires=phone_home_startup.service
 [Service]
 User=mercury
 ExecStart=/home/mercury/phone_home.sh
