@@ -1,5 +1,5 @@
-LOGGER_HOME="%(home)s"
-ID="%(id)s"
+export LOGGER_HOME="%(home)s"
+export ID="%(id)s"
 PASSWORD="%(password)s"
 
 MESSAGE=`curl -L -u $ID:$PASSWORD --cacert /home/mercury/cacert.pem $LOGGER_HOME/rpi/$ID/crontab`

@@ -4,8 +4,8 @@
 # spins up the servers needed 
 # to test this project in development
 
-logger_ip = "192.168.33.10"
-rpi_ip    = "192.168.33.15"
+logger_ip  = "192.168.33.10"
+rpi_ips    = ["192.168.33.15", "192.168.33.16"]
 
 proxy = ENV['HTTP_PROXY']
 puts proxy
@@ -35,13 +35,15 @@ Vagrant.configure("2") do |config|
     update_box node
 	end
 
-	config.vm.define "rpi0" do |node|
-    handle_proxies node, proxy
-    node.vm.box = "bento/centos-7.2"
-    node.vm.network "private_network", ip: rpi_ip
-    node.vm.hostname = "rpi0"
-    update_box node
-	end
+  rpi_ips.each_with_index do |ip, index|
+    config.vm.define "rpi#{index}" do |node|
+      handle_proxies node, proxy
+      node.vm.box = "bento/centos-7.2"
+      node.vm.network "private_network", ip: ip
+      node.vm.hostname = "rpi0"
+      update_box node
+    end
+  end
 end
 
 def handle_proxies vm, proxy

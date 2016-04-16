@@ -4,13 +4,22 @@ from fabric.contrib.console import confirm
 from fabric.contrib.files import upload_template
 import re
 import sys
+import os
 
-env.parallel = True
+env.roledefs["rpis"] = ["192.168.33.15", "192.168.33.16"];
+rpi_passwords = map(
+    lambda i: os.environ.get(
+        'MERCURY_RPI' + str(i) + "_PASSWORD", 
+        "password"
+    ),
+    range(0, len(env.roledefs["rpis"]))
+)
+if rpi_passwords.index("password") > -1:
+    print "WARNING: deploying default",\
+          "password to at least one rpi!";
 
-env.roledefs["rpis"] = ["192.168.33.15"]
 env.roledefs["loggers"] = ["192.168.33.10"]
-
-rpi_ids = ["rpi5"]
+env.parallel = True
 
 def vagrant():
     result = local('vagrant ssh-config', capture=True)
@@ -53,9 +62,14 @@ def rpis():
         "templates/rpi/sync.sh",
         "/home/mercury/sync.sh",
         context = { 
-            "id": rpi_ids[0], 
+            "id": "rpi" + str(
+                env.roledefs["rpis"].index(env.host)
+            ),
             "home": "https://" + env.roledefs["loggers"][0],
-            "password": "foobar"
+            "password": 
+                rpi_passwords[
+                    env.roledefs["rpis"].index(env.host)
+                ]
         }
     )
     sudo("chmod +x /home/mercury/sync.sh")
@@ -94,16 +108,25 @@ def logger():
     sudo("yum install -y nginx httpd-tools")
 
     sudo("touch /etc/nginx/.htpasswd")
-    sudo("htpasswd -b /etc/nginx/.htpasswd " + rpi_ids[0] + " foobar")
 
-    sudo("mkdir -p /usr/share/nginx/html/rpi/rpi5")
-    upload_template_as_user(
-        "root",
-        "templates/logger/basic_crontab",
-        "/usr/share/nginx/html/rpi/rpi5/crontab",
-        context = {}
-    )
-    put("logger/payload.tar.gz", "/usr/share/nginx/html/rpi/rpi5/payload.tar.gz", use_sudo=True)
+    for i, password in enumerate(rpi_passwords):
+        sudo("htpasswd -b /etc/nginx/.htpasswd " 
+            + "rpi" + str(i) + " " + password)
+
+        sudo("mkdir -p /usr/share/nginx/html/rpi/rpi" + str(i))
+        upload_template_as_user(
+            "root",
+            "templates/logger/basic_crontab",
+            "/usr/share/nginx/html/rpi/rpi"
+            + str(i) + "/crontab",
+            context = {}
+        )
+        put(
+            "logger/payload.tar.gz",
+            "/usr/share/nginx/html/rpi/rpi"
+            + str(i) + "/payload.tar.gz",
+            use_sudo=True
+        )
 
     sudo("mkdir -p /etc/nginx/ssl")
     upload_template_as_user(
