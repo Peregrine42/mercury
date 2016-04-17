@@ -14,6 +14,16 @@ rpi_passwords = map(
     ),
     range(0, len(env.roledefs["rpis"]))
 )
+
+greenside_password = os.environ.get(
+    'MERCURY_GREENSIDE_PASSWORD',
+    'password'
+)
+
+if greenside_password == "password":
+    print "WARNING: deploying default password",\
+          "for greenside!";
+
 if rpi_passwords.index("password") > -1:
     print "WARNING: deploying default",\
           "password to at least one rpi!";
@@ -107,7 +117,9 @@ def logger():
     sudo("yum install -y epel-release")
     sudo("yum install -y nginx httpd-tools")
 
-    sudo("touch /etc/nginx/.htpasswd")
+    sudo("touch /etc/nginx/.htpasswd");
+    sudo("htpasswd -b /etc/nginx/.htpasswd greenside "
+            + greenside_password)
 
     for i, password in enumerate(rpi_passwords):
         sudo("htpasswd -b /etc/nginx/.htpasswd " 
